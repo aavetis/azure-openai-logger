@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [],
+    "steps": [
+      {
+        "name": "applicationSettings",
+        "label": "Application Settings",
+        "subLabel": {
+          "preValidation": "Configure the application",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Application Settings",
+        "elements": [
+          {
+            "name": "apimServiceName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "APIM Service Name",
+            "defaultValue": "",
+            "toolTip": "Enter the APIM service name",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "customProperties",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Custom Properties",
+            "defaultValue": "",
+            "toolTip": "Enter custom properties as a comma-separated list",
+            "constraints": {
+              "required": false
+            }
+          },
+          {
+            "name": "appInsightsName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Application Insights Name",
+            "defaultValue": "",
+            "toolTip": "Enter the Application Insights name",
+            "constraints": {
+              "required": true
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "apimServiceName": "[steps('applicationSettings').apimServiceName]",
+      "customProperties": "[split(steps('applicationSettings').customProperties, ',')]",
+      "appInsightsName": "[steps('applicationSettings').appInsightsName]"
+    }
+  }
+}
