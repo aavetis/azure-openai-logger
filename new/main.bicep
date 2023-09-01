@@ -3,6 +3,23 @@ param openAiEndpoint string
 param openAiApiKey string
 param rgLocation string = resourceGroup().location
 
+/*
+things seem to work. need to think about outputs.
+outputs
+- api endpoint for openai
+- workbook link
+
+
+*/
+
+// Application Insights
+module appInsights './appInsights.bicep' = {
+  name: 'appInsightsModule'
+  params: {
+    rgLocation: rgLocation
+  }
+}
+
 // API Management
 module apiManagement './apiManagement.bicep' = {
   name: 'apiManagementModule'
@@ -11,14 +28,6 @@ module apiManagement './apiManagement.bicep' = {
     openAiApiKey: openAiApiKey
     appInsightsInstrumentationKey: appInsights.outputs.instrumentationKey
     appInsightsId: appInsights.outputs.id
-    rgLocation: rgLocation
-  }
-}
-
-// Application Insights
-module appInsights './appInsights.bicep' = {
-  name: 'appInsightsModule'
-  params: {
     rgLocation: rgLocation
   }
 }
