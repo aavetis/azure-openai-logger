@@ -10,18 +10,17 @@ module apiManagement './apiManagement.bicep' = {
     openAiEndpoint: openAiEndpoint
     openAiApiKey: openAiApiKey
     appInsightsInstrumentationKey: appInsights.outputs.instrumentationKey
+    appInsightsId: appInsights.outputs.id
     rgLocation: rgLocation
   }
 }
 
-// // Event Hub
-// module eventHub './eventHub.bicep' = {
-//   name: 'eventHubModule'
-// }
-
 // Application Insights
 module appInsights './appInsights.bicep' = {
   name: 'appInsightsModule'
+  params: {
+    rgLocation: rgLocation
+  }
 }
 
 // Azure Dashboard

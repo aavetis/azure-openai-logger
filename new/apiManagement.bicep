@@ -1,10 +1,12 @@
 param openAiEndpoint string
 param openAiApiKey string
 param appInsightsInstrumentationKey string
+param appInsightsId string
 param rgLocation string
+param rgId string = substring(uniqueString(resourceGroup().id), 0, 8)
 
-resource apiManagementService 'Microsoft.ApiManagement/service@2020-06-01-preview' = {
-  name: 'OpenAIApiManagement-test010101133'
+resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-preview' = {
+  name: 'APIM-${rgId}'
   location: rgLocation
   sku: {
     name: 'Consumption'
@@ -22,6 +24,7 @@ resource apiManagementLogger 'Microsoft.ApiManagement/service/loggers@2020-06-01
   properties: {
     loggerType: 'applicationInsights'
     description: 'Logger for OpenAI API calls'
+    resourceId: appInsightsId
     credentials: {
       instrumentationKey: appInsightsInstrumentationKey
     }
@@ -31,69 +34,63 @@ resource apiManagementLogger 'Microsoft.ApiManagement/service/loggers@2020-06-01
 // todo: keep going through the actual UI and lining it up with the API reference on what to enable
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.apimanagement/service?pivots=deployment-language-bicep
 
-resource api 'Microsoft.ApiManagement/service@2023-03-01-preview' = {
-  name: apiManagementService.name
-}
+// resource api 'Microsoft.ApiManagement/service@2023-03-01-preview' = {
+//   name: apiManagementService.name
+// }
 
 resource apiM 'Microsoft.ApiManagement/service/apis@2023-03-01-preview' = {
-  parent: api
+  parent: apiManagementService
   name: 'OpenAIProxy'
   properties: {
     serviceUrl: openAiEndpoint
     path: 'openai'
     displayName: 'OpenAI Proxy API' // Added display name
-    protocols: [ 'https' ] // Added supported protocol
+    protocols: [ 'https' ]
     format: 'openapi-link'
     value: 'https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/stable/2023-05-15/inference.json'
+    subscriptionRequired: false
   }
 }
 
 resource apiBackend 'Microsoft.ApiManagement/service/backends@2023-03-01-preview' = {
-  name: '${api.name}/openai'
+  parent: apiManagementService
+  name: 'backend'
   properties: {
     url: openAiEndpoint
-    protocol: 'https'
+    protocol: 'http'
     title: 'OpenAI API'
     description: 'OpenAI API'
     credentials: {
-      // query: {
-      //   subscriptionKey: openAiApiKey
-
-      // }
       header: {
-        'api-key': openAiApiKey
+        'api-key': [ openAiApiKey ]
       }
     }
   }
 }
 
-resource apiDiagnostics 'Microsoft.ApiManagement/service/diagnostics@2023-03-01-preview' = {
-  parent: apiBackend
-
+resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-03-01-preview' = {
+  parent: apiM
+  name: 'diagnostics-logger'
+  properties: {
+    alwaysLog: 'allErrors'
+    loggerId: apiManagementLogger.id
+    sampling: {
+      samplingType: 'fixed'
+      percentage: 100
+    }
+    metrics: true
+    backend: {
+      request: {
+        body: {
+          bytes: 8192
+        }
+      }
+      response: {
+        body: {
+          bytes: 8192
+        }
+      }
+    }
+    verbosity: 'information'
+  }
 }
-
-// resource apiPolicy 'Microsoft.ApiManagement/service/apis/policies@2020-06-01-preview' = {
-//   name: '${api.name}/policy'
-//   properties: {
-//     format: 'rawxml'
-//     value: '''
-//     <policies>
-//       <inbound>
-//         <set-header name="Ocp-Apim-Subscription-Key" exists-action="delete" />
-//         <set-header name="Ocp-Apim-Trace" exists-action="delete" />
-//         <log-to-eventhub logger-id="appInsightsLogger">@((string)context.Request.Body.As<JObject>())</log-to-eventhub>
-//         <base />
-//       </inbound>
-//       <backend>
-//         <base />
-//       </backend>
-//       <outbound>
-//         <base />
-//       </outbound>
-//       <on-error>
-//         <base />
-//       </on-error>
-//     </policies>
-//     '''
-//   }
-// }
