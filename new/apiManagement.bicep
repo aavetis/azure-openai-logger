@@ -19,6 +19,7 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-previe
   }
 }
 
+// tests
 // todo: keep going through the actual UI and lining it up with the API reference on what to enable
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.apimanagement/service?pivots=deployment-language-bicep
 
