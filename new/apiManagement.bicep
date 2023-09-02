@@ -114,6 +114,18 @@ resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-0
       percentage: 100
     }
     metrics: true
+    frontend: {
+      request: {
+        body: {
+          bytes: 8192
+        }
+      }
+      response: {
+        body: {
+          bytes: 8192
+        }
+      }
+    }
     backend: {
       request: {
         body: {
