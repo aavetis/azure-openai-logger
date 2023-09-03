@@ -1,88 +1,168 @@
-// Parameters for OpenAI configuration
-param location string = resourceGroup().location
+// Importing variables
 param openAiEndpoint string
-@secure()
 param openAiApiKey string
+param rgLocation string = resourceGroup().location
 
-// Unique identifier to ensure globally unique names
-var uniqueId = uniqueString(resourceGroup().id)
+/*
+todo
+- useful landing dashboard
+- surfacing useful information on completion, like API endpoint (could be on dashboard?), logs link
 
-// API Management setup to manage and monitor OpenAI APIs
-resource apiManagement 'Microsoft.ApiManagement/service@2020-06-01-preview' = {
-  name: 'LogLLMOpenApiManagement${uniqueId}'
-  location: location
-  sku: {
-    name: 'Developer'
-    capacity: 1
+
+*/
+
+// Application Insights
+module appInsights './appInsights.bicep' = {
+  name: 'appInsightsModule'
+  params: {
+    rgLocation: rgLocation
   }
+}
+
+// API Management
+module apiManagement './apiManagement.bicep' = {
+  name: 'apiManagementModule'
+  params: {
+    openAiEndpoint: openAiEndpoint
+    openAiApiKey: openAiApiKey
+    appInsightsInstrumentationKey: appInsights.outputs.instrumentationKey
+    appInsightsId: appInsights.outputs.id
+    rgLocation: rgLocation
+  }
+}
+
+resource dashboard 'Microsoft.Portal/dashboards@2020-09-01-preview' = {
+  name: 'OpenAIDashboard'
+  location: 'global'
   properties: {
-    publisherEmail: 'email@example.com'
-    publisherName: 'Your Organization'
-  }
-}
-
-// Event Hub setup for scalable event streaming and logging
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-01-01-preview' = {
-  name: 'LogLLMEventHubNamespace'
-  location: location
-  sku: {
-    name: 'Standard'
-    tier: 'Standard'
-  }
-}
-
-resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-01-01-preview' = {
-  name: '${eventHubNamespace.name}/LogLLMEventHub'
-  location: location
-}
-
-// Managed Identity setup for secure access control
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name: 'LogLLMOpenAiManagedIdentity'
-  location: location
-}
-
-resource eventHubNamespaceRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(eventHubNamespace.id, 'Azure Event Hubs Data Sender')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2b7893c4-684e-4acc-a535-f6e7f661b33a')
-    principalId: managedIdentity.properties.principalId
-  }
-  scope: eventHubNamespace
-}
-
-// Stream Analytics setup for real-time data stream processing
-resource streamAnalyticsJob 'Microsoft.StreamAnalytics/streamingjobs@2017-04-01-preview' = {
-  name: 'LogLLMStreamAnalyticsJob'
-  location: location
-  properties: {
-    sku: {
-      name: 'Standard'
-    }
-    // Additional configuration for input, output, transformation, etc., will go here
-  }
-}
-
-resource streamAnalyticsInput 'Microsoft.StreamAnalytics/streamingjobs/inputs@2017-04-01-preview' = {
-  name: '${streamAnalyticsJob.name}/LogLLMEventHubInput'
-  properties: {
-    type: 'Stream'
-    datasource: {
-      type: 'Microsoft.EventHub/EventHub'
-      properties: {
-        eventHubNamespace: eventHubNamespace.name
-        eventHubName: eventHub.name
-        sharedAccessPolicyName: 'RootManageSharedAccessKey'
+    lenses: [
+      {
+        order: 0
+        parts: [
+          {
+            position: {
+              x: 0
+              y: 0
+              colSpan: 4
+              rowSpan: 3
+            }
+            metadata: {
+              inputs: [
+                {
+                  name: 'options'
+                  isOptional: true
+                }
+                {
+                  name: 'sharedTimeRange'
+                  isOptional: true
+                }
+              ]
+              type: 'Extension/HubsExtension/PartType/MonitorChartPart'
+              settings: {
+                content: {
+                  options: {
+                    chart: {
+                      metrics: [
+                        {
+                          resourceMetadata: {
+                            id: appInsights.outputs.id
+                          }
+                          name: 'requests/duration'
+                          aggregationType: 4 // avg
+                          namespace: 'Microsoft.Insights/components'
+                          metricVisualization: {
+                            displayName: 'Server response time'
+                            resourceDisplayName: appInsights.name
+                          }
+                        }
+                      ]
+                      title: 'Response time'
+                      titleKind: 1
+                      visualization: {
+                        chartType: 2
+                        legendVisualization: {
+                          isVisible: true
+                          position: 2
+                          hideSubtitle: false
+                        }
+                        axisVisualization: {
+                          x: {
+                            isVisible: true
+                            axisType: 2
+                          }
+                          y: {
+                            isVisible: true
+                            axisType: 1
+                          }
+                        }
+                        disablePinning: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          {
+            position: {
+              x: 0
+              y: 0
+              rowSpan: 2
+              colSpan: 3
+            }
+            metadata: {
+              inputs: []
+              type: 'Extension/HubsExtension/PartType/MarkdownPart'
+              settings: {
+                content: {
+                  settings: {
+                    content: '## OpenAI WorkBook Overview\r\nWelcome to your OpenAI WorkBook dashboard. Here you can find insights and analytics related to your OpenAI interactions.'
+                  }
+                }
+              }
+            }
+          }
+          {
+            position: {
+              x: 3
+              y: 0
+              rowSpan: 4
+              colSpan: 8
+            }
+            metadata: {
+              inputs: []
+              type: 'Extension/HubsExtension/PartType/MarkdownPart'
+              settings: {
+                content: {
+                  settings: {
+                    content: 'This dashboard provides you with valuable information and links related to your OpenAI interactions:\r\n\r\n1. [OpenAI WorkBook](#workbookId)\r\n2. [API Management](#apiManagementId)\r\n3. [App Insights](#appInsightsId)'
+                  }
+                }
+              }
+            }
+          }
+          {
+            position: {
+              x: 0
+              y: 2
+              rowSpan: 2
+              colSpan: 3
+            }
+            metadata: {
+              inputs: []
+              type: 'Extension/HubsExtension/PartType/VideoPart'
+              settings: {
+                content: {
+                  settings: {
+                    src: 'https://www.youtube.com/watch?v=rOiSRkxtTeU'
+                    autoplay: false
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
-    }
-  }
-}
-
-// Custom Policy for OpenAI integration within API Management
-resource apiManagementPolicy 'Microsoft.ApiManagement/service/policies@2020-06-01-preview' = {
-  name: '${apiManagement.name}/policy'
-  properties: {
-    value: '<policies><inbound><set-header name="Authorization" exists-action="override"><value>@($"Bearer {openAiApiKey}")</value></set-header></inbound></policies>'
-    format: 'xml'
+    ]
   }
 }
