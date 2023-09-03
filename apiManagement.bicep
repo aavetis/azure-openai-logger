@@ -4,7 +4,6 @@ param appInsightsInstrumentationKey string
 param appInsightsId string
 param rgLocation string
 param rgId string = substring(uniqueString(resourceGroup().id), 0, 8)
-param aiName string = guid('openai')
 
 resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-preview' = {
   name: 'APIM-${rgId}'
@@ -19,13 +18,11 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-previe
   }
 }
 
-// tests
-// todo: keep going through the actual UI and lining it up with the API reference on what to enable
-// https://learn.microsoft.com/en-us/azure/templates/microsoft.apimanagement/service?pivots=deployment-language-bicep
-
-// resource api 'Microsoft.ApiManagement/service@2023-03-01-preview' = {
-//   name: apiManagementService.name
-// }
+/*
+todos
+- add keyvault for named value on api? might be dumb, because we need the api key at some point anyway
+-
+*/
 
 resource apiM 'Microsoft.ApiManagement/service/apis@2023-03-01-preview' = {
   parent: apiManagementService
@@ -67,8 +64,6 @@ resource inboundPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-03-01
   '''
   }
 }
-
-// have to add inbound policy with backend id to allow calls through
 
 resource apiBackend 'Microsoft.ApiManagement/service/backends@2023-03-01-preview' = {
   parent: apiManagementService
