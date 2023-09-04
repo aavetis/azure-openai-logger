@@ -6,7 +6,7 @@ param rgLocation string
 param rgId string = substring(uniqueString(resourceGroup().id), 0, 8)
 
 resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-preview' = {
-  name: 'APIM-${rgId}'
+  name: 'OpenAI-API-${rgId}'
   location: rgLocation
   sku: {
     name: 'Consumption'
@@ -34,10 +34,22 @@ resource apiM 'Microsoft.ApiManagement/service/apis@2023-03-01-preview' = {
     protocols: [ 'https' ]
     format: 'openapi-link'
     value: 'https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/stable/2023-05-15/inference.json'
-    subscriptionRequired: false
-
+    subscriptionRequired: true
+    subscriptionKeyParameterNames: {
+      header: 'api-key'
+      query: 'api-key'
+    }
   }
+}
 
+resource apiSubscription 'Microsoft.ApiManagement/service/subscriptions@2023-03-01-preview' = {
+  parent: apiManagementService
+  name: 'OpenAI-Subscription'
+  properties: {
+    scope: apiM.id
+    displayName: 'OpenAI Subscription'
+    state: 'active'
+  }
 }
 
 resource inboundPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-03-01-preview' = {

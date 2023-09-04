@@ -3,12 +3,14 @@ param wbUrl string
 param appInsightsId string
 param appInsightsName string
 
-var markdownContent = format(
+var gatewayContent = format(
   '''
-# API Gateway
-Endpoint URL: `{0}`
+# OpenAI API Gateway
+Replace your OpenAI API endpoint with the following values.
 
-Endpoint Key: `tbd`
+**Endpoint URL**: `{0}`
+
+**Endpoint Key**: [Find key here]({1})
 
 
 ## Title
@@ -144,7 +146,7 @@ resource dashboard 'Microsoft.Portal/dashboards@2020-09-01-preview' = {
               settings: {
                 content: {
                   settings: {
-                    content: markdownContent
+                    content: gatewayContent
                   }
                 }
               }
