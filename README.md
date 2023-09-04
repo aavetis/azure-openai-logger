@@ -9,5 +9,16 @@
 
 # Todos
 
-- Abstract KQL and workbook stuff to make it easier to read / update. Right now it's all jammed in `serializedData`
--
+- [ ] query packs with queries
+- [ ] Experiment more with bicep functions to see what we have access to (to make shortcut links) - e.g. tenant and sub ids
+- [ ] Abstract KQL and workbook stuff to make it easier to read / update. Right now it's all jammed in `serializedData`
+- [ ] Improve dashboard
+  - [ ] Can we get and link to the workbook url?
+  - [ ] Show APIM route to be used in OpenAI API calls
+- [ ] Add / show subscription API key? (make the APIM route private)
+
+# Gotchas identified
+
+- Some resources are not idempotent, so will land on naming collisions if you repeat deployments. Like Queries inside QueryPacks
+- Insights.components/favorites - Version is required but not documented
+- Microsoft.Insights/components/favorites@2015-05-01 - this resource doesn't work, talking to Azure support on twitter

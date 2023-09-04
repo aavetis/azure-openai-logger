@@ -137,3 +137,6 @@ resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-0
     verbosity: 'information'
   }
 }
+
+output url string = apiM.properties.serviceUrl
+output gatewayUrl string = apiManagementService.properties.gatewayUrl
