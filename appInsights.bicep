@@ -1,7 +1,6 @@
 param rgLocation string
-// get GUID for name
 param wbName string = guid(resourceGroup().id, 'OpenAIWorkBook')
-param wbName2 string = guid('OpenAIWorkBook2')
+param qpName string = guid('Query Pack')
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
   name: 'OpenAIAppInsights'
@@ -33,10 +32,10 @@ resource queryPack 'Microsoft.OperationalInsights/queryPacks@2019-09-01' = {
 
 resource query 'Microsoft.OperationalInsights/queryPacks/queries@2019-09-01' = {
   parent: queryPack
-  name: wbName2
+  name: qpName
   properties: {
-    displayName: 'query display name'
-    description: 'query description'
+    displayName: 'OpenAI Logs'
+    description: 'Requests and responses from OpenAI calls'
     body: kqlQuery
     related: {
       categories: [
@@ -81,6 +80,3 @@ resource workbook 'Microsoft.Insights/workbooks@2022-04-01' = {
 output instrumentationKey string = appInsights.properties.InstrumentationKey
 output debugInfo string = 'App Insights Instrumentation Key: ${appInsights.properties.InstrumentationKey}'
 output id string = appInsights.id
-
-// pass this as url: /subscriptions/50fbd004-95f5-4ece-baf9-d73565614a6a/resourceGroups/bicepTest8/providers/Microsoft.Insights/workbooks/7a0319d7-a1e8-5465-8f06-196691fc78c7
-output workbookUrl string = '${appInsights.properties.TenantId}/resource/subscriptions${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.Insights/workbooks/${wbName}'

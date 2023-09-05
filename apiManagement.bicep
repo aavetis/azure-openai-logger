@@ -24,7 +24,7 @@ todos
 -
 */
 
-resource apiM 'Microsoft.ApiManagement/service/apis@2023-03-01-preview' = {
+resource openAiApiProxy 'Microsoft.ApiManagement/service/apis@2023-03-01-preview' = {
   parent: apiManagementService
   name: 'OpenAIProxy'
   properties: {
@@ -46,14 +46,14 @@ resource apiSubscription 'Microsoft.ApiManagement/service/subscriptions@2023-03-
   parent: apiManagementService
   name: 'OpenAI-Subscription'
   properties: {
-    scope: apiM.id
+    scope: openAiApiProxy.id
     displayName: 'OpenAI Subscription'
     state: 'active'
   }
 }
 
 resource inboundPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-03-01-preview' = {
-  parent: apiM
+  parent: openAiApiProxy
   name: 'policy'
   properties: {
     format: 'rawxml'
@@ -112,7 +112,7 @@ resource apiManagementLogger 'Microsoft.ApiManagement/service/loggers@2020-06-01
 
 resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-03-01-preview' = {
   name: 'applicationinsights'
-  parent: apiM
+  parent: openAiApiProxy
   properties: {
     logClientIp: false
     alwaysLog: 'allErrors'
@@ -150,5 +150,5 @@ resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-0
   }
 }
 
-output url string = apiM.properties.serviceUrl
+output url string = openAiApiProxy.properties.serviceUrl
 output gatewayUrl string = apiManagementService.properties.gatewayUrl

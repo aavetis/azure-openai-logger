@@ -1,33 +1,87 @@
-# Architecture / Footprint
+# Observability for your Azure OpenAI instance
 
-- API Management (Consumption)
-- App Insights
--
+## Logs preview
 
-# Issues / concerns
+![Logs](/images/logs.png)
 
-- Is it better to use APIM Consumption plan (serverless, $0.042 / 10,000 operations) and Application Insights for diagnostics, or upgrade APIM to Developer (~$50/mo) and use built-in diagnostics with Azure Monitor?
-- Logs take 2-4 seconds to show up, this is a limitation of App Insights. Not sure if any alternative paths available to capture APIM requests.
-- Why might we need Log Analytics Workspaces here? how do we streamline the UX for the user? Currently, the workbook is created but users have to go find it, then click "open workbook" to start seeing logs.
-- OpenAI API key will be visible via APIM instance to anyone who has access. Even if we add Key Vault to the solution, someone will still have to provide the key at some point.
-- Consider just using Grafana instead of forcing workbooks / queries to live in a nice UX
+## Provisioned resources
+
+![Provisioned resources](/images/resources.png)
+
+This project aims to create a simple and easy to deploy solution to add observability to your Azure OpenAI instance. The approach adds an API Management instance as a proxy for your existing Azure OpenAI service, and funnels logs / requests / responses to an Application Insights instance. Additionally, a prebuilt query is saved to a workbook for easy access to logs.
+
+## Primary goals:
+
+- Provisioning any dependent services should be completely automated
+- Configuring and integrating services should be completely automated
+- Queries, workbooks, and visualizations should be available out of the box
+- An overall "batteries included" type of experience
+
+## Architecture footprint
+
+The main components of the architecture include:
+
+- API Management (Consumption plan)
+  - Proxies your Azure OpenAI endpoint.
+  - Provides a subscription key so you don't have to share your original API key.
+  - Collects logs and metrics.
+- Application Insights
+  - Captures all logs from the APIM service via Application Insights logger resource.
+  - Provides a workbook with prebuilt queries for easy access to logs.
+  - `QueryPack` resource with prebuilt `Query` added.
+  - Workbook to view table of logs (WIP - need to improve how we visualize longer logs).
+- Azure OpenAI (PROVIDED BY USER)
+  - When running this Bicep template, you must provide your Azure OpenAI endpoint and API key. **This script will NOT create an Azure OpenAI instance for you.**
+- Dashboard
+  - This will eventually be used for quick links and instructions.
+
+## Bicep explorer
+
+![Bicep explorer](/images/explorer.png)
+
+# Usage instructions
+
+- **Pre-requisite: You must have an Azure OpenAI service provisioned already.**
+- (Recommended) Create a new resource group to house these resources
+
+```bash
+az group create --name loggerTest --location eastus
+```
+
+- In the root of this repo, run the deployment script
+
+```bash
+az deployment group create --resource-group loggerTest \
+--template-file ./main.bicep \
+--parameters openAiEndpoint="https://your-instance-hostname.openai.azure.com/openai/" \
+openAiApiKey="your-api-key"
+```
+
+# Key Considerations
+
+There are several important considerations and potential issues to be aware of:
+
+- APIM Consumption vs Developer Plan: The current setup uses the APIM Consumption plan for cost efficiency. However, upgrading to the Developer plan (~$50/mo) could provide built-in diagnostics with Azure Monitor.
+- Log Latency: Requests take 2-4 seconds to show up in Application Insights.
+- API Key Visibility: The OpenAI API key will be visible via the APIM instance to anyone who has access.
+- : Consider using Grafana or other monitoring tools for a potentially better user experience.
 
 # Todos
 
-- [ ] query packs with queries
-- [ ] Experiment more with bicep functions to see what we have access to (to make shortcut links) - e.g. tenant and sub ids
-- [ ] Abstract KQL and workbook stuff to make it easier to read / update. Right now it's all jammed in `serializedData`
-- [ ] Improve dashboard
-  - [ ] Can we get and link to the workbook url?
-  - [ ] Show APIM route to be used in OpenAI API calls
-- [ ] Add / show subscription API key? (make the APIM route private)
+Here are some tasks to improve the current setup:
 
-# Gotchas identified
+- [x] Create query packs with queries.
+- [x] Improve the dashboard by linking to the workbook URL and showing the APIM route for OpenAI API calls.
+- [x] Make the APIM route private by adding a subscription API key.
+- [ ] Create a `main.parameters.json` to load in the parameters for the deployment script.
+- [ ] Experiment with bicep functions for creating shortcut links to add to dashboard (e.g., tenant and sub ids).
+- [ ] Abstract KQL and workbook code for easier reading and updating. Abstracted KQL for the QueryPack / Query objects, but not for the workbook since it requires JSON.
 
-- Some resources are not idempotent, so will land on naming collisions if you repeat deployments. Like Queries inside QueryPacks
-- Insights.components/favorites - Version is required but not documented
-- Microsoft.Insights/components/favorites@2015-05-01 - this resource doesn't work, talking to Azure support on twitter
+# Known Issues
 
-# Long term ideas
+- The `Microsoft.Insights/components/favorites@2015-05-01` resource does not work as expected. This issue is currently being discussed with Azure support. Hopefully we'll be able to favorite the query we create, as that'll make it easier to find our logs view.
 
-- Cache generations in APIM?
+# Future Ideas
+
+- APIM has a caching mechanism, can we do something interesting here? (caching GPT responses)
+- Grafana for visualizations - can we completely automate the provisioning, configuration, and integration of Grafana?

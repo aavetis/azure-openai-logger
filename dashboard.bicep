@@ -1,5 +1,4 @@
 param apiGateway string
-param wbUrl string
 param appInsightsId string
 param appInsightsName string
 
@@ -10,17 +9,12 @@ Replace your OpenAI API endpoint with the following values.
 
 **Endpoint URL**: `{0}`
 
-**Endpoint Key**: [Find key here]({1})
+**Endpoint Key**: Navigate to your API Management instance -> Subscription keys
 
-
-## Title
-```
-wb url to be used eventually?
-{1}
 ```
 
 ### Test title
-''', apiGateway, wbUrl)
+''', apiGateway)
 
 resource dashboard 'Microsoft.Portal/dashboards@2020-09-01-preview' = {
 
@@ -35,8 +29,46 @@ resource dashboard 'Microsoft.Portal/dashboards@2020-09-01-preview' = {
             position: {
               x: 0
               y: 0
-              colSpan: 4
               rowSpan: 3
+              colSpan: 3
+            }
+            metadata: {
+              inputs: []
+              type: 'Extension/HubsExtension/PartType/MarkdownPart'
+              settings: {
+                content: {
+                  settings: {
+                    content: '## OpenAI WorkBook Overview\r\nWelcome to your OpenAI WorkBook dashboard. Here you can find insights and analytics related to your OpenAI interactions.'
+                  }
+                }
+              }
+            }
+          }
+          {
+            position: {
+              x: 3
+              y: 0
+              rowSpan: 4
+              colSpan: 8
+            }
+            metadata: {
+              inputs: []
+              type: 'Extension/HubsExtension/PartType/MarkdownPart'
+              settings: {
+                content: {
+                  settings: {
+                    content: gatewayContent
+                  }
+                }
+              }
+            }
+          }
+          {
+            position: {
+              x: 0
+              y: 4
+              colSpan: 6
+              rowSpan: 4
             }
             metadata: {
               inputs: [
@@ -90,83 +122,6 @@ resource dashboard 'Microsoft.Portal/dashboards@2020-09-01-preview' = {
                         disablePinning: true
                       }
                     }
-                  }
-                }
-              }
-            }
-          }
-          {
-            position: {
-              x: 0
-              y: 0
-              rowSpan: 2
-              colSpan: 3
-            }
-            metadata: {
-              inputs: []
-              type: 'Extension/HubsExtension/PartType/MarkdownPart'
-              settings: {
-                content: {
-                  settings: {
-                    content: '## OpenAI WorkBook Overview\r\nWelcome to your OpenAI WorkBook dashboard. Here you can find insights and analytics related to your OpenAI interactions.'
-                  }
-                }
-              }
-            }
-          }
-          {
-            position: {
-              x: 3
-              y: 0
-              rowSpan: 4
-              colSpan: 8
-            }
-            metadata: {
-              inputs: []
-              type: 'Extension/HubsExtension/PartType/MarkdownPart'
-              settings: {
-                content: {
-                  settings: {
-                    content: 'This dashboard provides you with valuable information and links related to your OpenAI interactions:\r\n\r\n1. [OpenAI WorkBook](#workbookId)\r\n2. [API Management](#apiManagementId)\r\n3. [App Insights](#appInsightsId)'
-                  }
-                }
-              }
-            }
-          }
-          {
-            position: {
-              x: 3
-              y: 0
-              rowSpan: 4
-              colSpan: 8
-            }
-            metadata: {
-              inputs: []
-              type: 'Extension/HubsExtension/PartType/MarkdownPart'
-              settings: {
-                content: {
-                  settings: {
-                    content: gatewayContent
-                  }
-                }
-              }
-            }
-          }
-          {
-            position: {
-              x: 0
-              y: 2
-              rowSpan: 2
-              colSpan: 3
-            }
-            metadata: {
-              inputs: []
-              type: 'Extension/HubsExtension/PartType/VideoPart'
-              settings: {
-                content: {
-                  settings: {
-                    src: 'https://www.youtube.com/watch?v=rOiSRkxtTeU'
-                    autoplay: false
                   }
                 }
               }

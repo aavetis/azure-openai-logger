@@ -1,4 +1,3 @@
-// Importing variables
 param openAiEndpoint string
 param openAiApiKey string
 param rgLocation string = resourceGroup().location
@@ -23,11 +22,11 @@ module apiManagement './apiManagement.bicep' = {
   }
 }
 
+// Dashboard (WIP)
 module dashboard './dashboard.bicep' = {
   name: 'dashboardModule'
   params: {
     apiGateway: apiManagement.outputs.gatewayUrl
-    wbUrl: appInsights.outputs.workbookUrl
     appInsightsId: appInsights.outputs.id
     appInsightsName: appInsights.name
   }
