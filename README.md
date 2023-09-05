@@ -57,6 +57,26 @@ az deployment group create --resource-group loggerTest \
 openAiApiKey="your-api-key"
 ```
 
+- Review the Dashboard to copy your new API endpoint, and replace it in your code. E.g.,
+
+```javascript
+# example Javascript code to call your Azure OpenAI instance
+const { Configuration } = require("openai");
+
+# add your APIM Subscription Key
+const apiKey = process.env.MY_API_KEY;
+
+config = new Configuration({
+basePath: `https://${APIM_ENDPOINT}/openai/deployments/${OPENAI_DEPLOYMENT_NAME}`,
+
+# be sure to add headers!
+baseOptions: {
+    headers: { "api-key": apiKey },
+    params: { "api-version": "2023-07-01-preview" }
+}
+});
+```
+
 # Key Considerations
 
 There are several important considerations and potential issues to be aware of:
