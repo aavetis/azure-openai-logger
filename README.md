@@ -85,3 +85,5 @@ Here are some tasks to improve the current setup:
 
 - APIM has a caching mechanism, can we do something interesting here? (caching GPT responses)
 - Grafana for visualizations - can we completely automate the provisioning, configuration, and integration of Grafana?
+
+This project takes inspiration from [this solution](https://github.com/Azure-Samples/openai-python-enterprise-logging), but aims to be significantly lighterweight and 100% automated for deployment.
