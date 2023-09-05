@@ -1,21 +1,15 @@
 # Observability for your Azure OpenAI instance
 
-## Logs preview
-
-![Logs](/images/logs.png)
-
-## Provisioned resources
-
-![Provisioned resources](/images/resources.png)
+## Overview and goals
 
 This project aims to create a simple and easy to deploy solution to add observability to your Azure OpenAI instance. The approach adds an API Management instance as a proxy for your existing Azure OpenAI service, and funnels logs / requests / responses to an Application Insights instance. Additionally, a prebuilt query is saved to a workbook for easy access to logs.
 
-## Primary goals:
+- Keep all your OpenAI generations, metrics, and logs in your own Azure subscription.
+- Provision and configure all dependent services programmatically.
+- Queries, workbooks, and visualizations are available out of the box.
+- An overall "batteries included" type of experience.
 
-- Provisioning any dependent services should be completely automated
-- Configuring and integrating services should be completely automated
-- Queries, workbooks, and visualizations should be available out of the box
-- An overall "batteries included" type of experience
+![Logs](/images/logs.png)
 
 ## Architecture footprint
 
@@ -35,9 +29,21 @@ The main components of the architecture include:
 - Dashboard
   - This will eventually be used for quick links and instructions.
 
-## Bicep explorer
+<!-- ## Provisioned resources -->
+
+![Provisioned resources](/images/resources.png)
+
+<details>
+
+<summary>
+
+**View Bicep explorer**
+
+</summary>
 
 ![Bicep explorer](/images/explorer.png)
+
+</details>
 
 # Usage instructions
 
@@ -77,7 +83,7 @@ config = new Configuration({
 });
 ```
 
-# Key Considerations
+# Key considerations
 
 There are several important considerations and potential issues to be aware of:
 
@@ -94,14 +100,15 @@ Here are some tasks to improve the current setup:
 - [x] Improve the dashboard by linking to the workbook URL and showing the APIM route for OpenAI API calls.
 - [x] Make the APIM route private by adding a subscription API key.
 - [ ] Create a `main.parameters.json` to load in the parameters for the deployment script.
+- [ ] Add a UI component, maybe as a managed application?
 - [ ] Experiment with bicep functions for creating shortcut links to add to dashboard (e.g., tenant and sub ids).
 - [ ] Abstract KQL and workbook code for easier reading and updating. Abstracted KQL for the QueryPack / Query objects, but not for the workbook since it requires JSON.
 
-# Known Issues
+# Known issues
 
 - The `Microsoft.Insights/components/favorites@2015-05-01` resource does not work as expected. This issue is currently being discussed with Azure support. Hopefully we'll be able to favorite the query we create, as that'll make it easier to find our logs view.
 
-# Future Ideas
+# Future thoughts
 
 - APIM has a caching mechanism, can we do something interesting here? (caching GPT responses)
 - Grafana for visualizations - can we completely automate the provisioning, configuration, and integration of Grafana?
