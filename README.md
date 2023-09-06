@@ -99,6 +99,13 @@ Here are some tasks to improve the current setup:
 - [x] Create query packs with queries.
 - [x] Improve the dashboard by linking to the workbook URL and showing the APIM route for OpenAI API calls.
 - [x] Make the APIM route private by adding a subscription API key.
+- [ ] App Insights "Live Metrics" can show requests and dependency calls (responses) in real time. Something interesting here? Can we shortcut link to it?
+- [ ] Workbook ideas
+
+  - [ ] Use Export Parameters where each row is a request, and clicking expands the request to see details.
+  - [ ] Aggregate token usage over time.
+  - [ ] Requests count and duration over time.
+
 - [ ] Create a `main.parameters.json` to load in the parameters for the deployment script.
 - [ ] Add a UI component, maybe as a managed application?
 - [ ] Experiment with bicep functions for creating shortcut links to add to dashboard (e.g., tenant and sub ids).
