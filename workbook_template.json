@@ -1,0 +1,157 @@
+{
+    "version": "Notebook/1.0",
+    "items": [
+        {
+            "type": 1,
+            "content": {
+                "json": "# OpenAI Requests\n---\n"
+            },
+            "name": "text - 2"
+        },
+        {
+            "type": 1,
+            "content": {
+                "json": "Click on a row to view the details of that request.",
+                "style": "info"
+            },
+            "name": "text - 6"
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "requests\n| where operation_Name == \"OpenAIProxy;rev=1 - Completions_Create\" or operation_Name == \"OpenAIProxy;rev=1 - ChatCompletions_Create\"\n| extend requestId = customDimensions.[\"Request Id\"]\n| extend Prompt = parse_json(tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Request-Body\"])).messages[-1].content))))\n| extend Generation = parse_json(tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).choices))[0].message)).content\n| extend promptTokens = parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage)).prompt_tokens\n| extend completionTokens = parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage)).completion_tokens\n| extend totalTokens = parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage)).total_tokens\n| project timestamp, requestId, Prompt, Generation, promptTokens, completionTokens, totalTokens, round(duration,2), operation_Name",
+                "size": 0,
+                "showRefreshButton": true,
+                "exportFieldName": "requestId",
+                "exportParameterName": "SelectedRequest",
+                "exportDefaultValue": "none",
+                "exportToExcelOptions": "all",
+                "queryType": 0,
+                "resourceType": "microsoft.insights/components",
+                "gridSettings": {
+                    "filter": true,
+                    "sortBy": [
+                        {
+                            "itemKey": "timestamp",
+                            "sortOrder": 2
+                        }
+                    ]
+                },
+                "sortBy": [
+                    {
+                        "itemKey": "timestamp",
+                        "sortOrder": 2
+                    }
+                ]
+            },
+            "name": "query - 2",
+            "styleSettings": {
+                "showBorder": true
+            }
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "let SelectedRequest = '{SelectedRequest}';\nlet MetaData = requests\n| where tostring(customDimensions.[\"Request Id\"]) == SelectedRequest or SelectedRequest == 'ALL'\n| extend Duration = tostring(round(duration,2)), Success = tostring(success), PerformanceBucket = tostring(performanceBucket)\n| extend RequestSize = tostring(customMeasurements[\"Request Size\"]), ResponseSize = tostring(customMeasurements[\"Response Size\"])\n| extend Model = tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).model)))\n| extend OperationName = tostring(customDimensions[\"Operation Name\"])\n| extend UsageData = parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage))\n| extend TotalTokens = tostring(UsageData[\"total_tokens\"]), CompletionTokens = tostring(UsageData[\"completion_tokens\"]), PromptTokens = tostring(UsageData[\"prompt_tokens\"])\n| project Metadata=strcat(\"|&nbsp;|&nbsp;|\\n|--:|--|\\n\", \"| **Duration** | \", Duration, \" ms |\\n| **Success** | \", Success, \"|\\n| **Request Size** | \", RequestSize, \" bytes |\\n| **Response Size** | \", ResponseSize, \" bytes |\\n| **Total Tokens** | \", TotalTokens, \" |\\n| **Completion Tokens** | \", CompletionTokens, \" |\\n| **Prompt Tokens** | \", PromptTokens, \"|\\n| **Performance Bucket** | \", PerformanceBucket, \"|\\n| **Model** | \", Model, \"|\\n| **Operation Name** | \", OperationName, \" |\");\n\nMetaData\n",
+                "size": 0,
+                "title": "Request Metadata",
+                "noDataMessage": "Select a request in the table above to see details.",
+                "timeContext": {
+                    "durationMs": 86400000
+                },
+                "queryType": 0,
+                "resourceType": "microsoft.insights/components",
+                "visualization": "card",
+                "textSettings": {
+                    "style": "markdown"
+                }
+            },
+            "customWidth": "0",
+            "name": "Request Metadata",
+            "styleSettings": {
+                "margin": "0",
+                "maxWidth": "30%"
+            }
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "let SelectedRequest = '{SelectedRequest}';\nlet SystemMessages = requests\n| where customDimensions.[\"Request Id\"] == SelectedRequest or 'ALL' == SelectedRequest\n| extend MessagesArray = parse_json(tostring(parse_json(tostring(customDimensions.[\"Request-Body\"])).messages))\n| mv-expand MessagesArray\n| where tostring(MessagesArray[\"role\"]) == \"system\"\n| project ChatHistoryRow=strcat(\"🔔 **System**: \", tostring(MessagesArray[\"content\"]), \"\\n\"), Order=1;\n\nlet UserAndAssistantMessages = requests\n| where customDimensions.[\"Request Id\"] == SelectedRequest or 'ALL' == SelectedRequest\n| extend MessagesArray = parse_json(tostring(parse_json(tostring(customDimensions.[\"Request-Body\"])).messages))\n| mv-expand MessagesArray\n| where tostring(MessagesArray[\"role\"]) != \"system\"\n| extend Role = tostring(MessagesArray[\"role\"]), Content = tostring(MessagesArray[\"content\"])\n| extend Symbol = iif(Role == \"assistant\", \"🤖 \", \"👤 \")\n| project ChatHistoryRow=strcat(Symbol, \"**\", iif(Role == \"assistant\", \"Assistant\", \"User\"), \"**: \", Content, \"\\n\"), Order=2;\n\nlet FinalResponse = requests\n| where customDimensions.[\"Request Id\"] == SelectedRequest or 'ALL' == SelectedRequest\n| extend Generation = parse_json(tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).choices))[0].message)).content\n| project ChatHistoryRow=strcat(\"🤖 **Assistant**: \", Generation, \"\\n\"), Order=3;\n\nSystemMessages\n| union UserAndAssistantMessages, FinalResponse\n| order by Order asc\n| summarize ChatHistory=strcat_array(makelist(ChatHistoryRow), \"\\n\")\n",
+                "size": 0,
+                "title": "Request History",
+                "noDataMessage": "Select a request in the table above to see details.",
+                "timeContext": {
+                    "durationMs": 86400000
+                },
+                "queryType": 0,
+                "resourceType": "microsoft.insights/components",
+                "visualization": "card",
+                "textSettings": {
+                    "style": "markdown"
+                }
+            },
+            "customWidth": "65",
+            "name": "Request History",
+            "styleSettings": {
+                "margin": "0",
+                "padding": "12px",
+                "showBorder": true
+            }
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "requests\n| extend totalTokens = todouble(parse_json(tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage)).total_tokens)))\n| summarize sumTotalTokens=sum(totalTokens) by bin(timestamp, 1h)\n| render timechart\n",
+                "size": 0,
+                "title": "Token usage over time",
+                "color": "amethyst",
+                "timeContext": {
+                    "durationMs": 86400000
+                },
+                "queryType": 0,
+                "resourceType": "microsoft.insights/components",
+                "chartSettings": {
+                    "seriesLabelSettings": [
+                        {
+                            "seriesName": "sumTotalTokens",
+                            "color": "amethyst"
+                        }
+                    ]
+                }
+            },
+            "customWidth": "50",
+            "name": "Token usage over time"
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "requests\n| summarize ResponseDuration = avg(duration) by bin(timestamp, 1h)\n| render timechart\n",
+                "size": 0,
+                "title": "Average response time",
+                "color": "blue",
+                "timeContext": {
+                    "durationMs": 86400000
+                },
+                "queryType": 0,
+                "resourceType": "microsoft.insights/components",
+                "chartSettings": {
+                    "seriesLabelSettings": [
+                        {
+                            "seriesName": "ResponseDuration",
+                            "label": "",
+                            "color": "blue"
+                        }
+                    ]
+                }
+            },
+            "customWidth": "50",
+            "name": "Average response time"
+        }
+    ],
+    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
