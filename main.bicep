@@ -1,5 +1,6 @@
 param openAiEndpoint string
 param openAiApiKey string
+param wbData object = base64ToJson(loadFileAsBase64('workbook_template.json'))
 param rgLocation string = resourceGroup().location
 
 // Application Insights
@@ -7,6 +8,7 @@ module appInsights './appInsights.bicep' = {
   name: 'appInsightsModule'
   params: {
     rgLocation: rgLocation
+    wbSerializedData: wbData
   }
 }
 
