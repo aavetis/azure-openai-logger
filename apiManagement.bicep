@@ -124,11 +124,17 @@ resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-0
     metrics: true
     frontend: {
       request: {
+        headers: [
+          'custom-headers'
+        ]
         body: {
           bytes: 8192
         }
       }
       response: {
+        headers: [
+          'custom-headers'
+        ]
         body: {
           bytes: 8192
         }
@@ -136,11 +142,17 @@ resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-0
     }
     backend: {
       request: {
+        headers: [
+          'custom-headers'
+        ]
         body: {
           bytes: 8192
         }
       }
       response: {
+        headers: [
+          'custom-headers'
+        ]
         body: {
           bytes: 8192
         }
