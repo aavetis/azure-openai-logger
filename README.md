@@ -29,7 +29,7 @@ az deployment group create --resource-group loggerTest \
 openAiApiKey="your-api-key"
 ```
 
-- Review the Dashboard to copy your new API endpoint, and replace it in your code. E.g.,
+- Review your API Management instance to copy the endpoint of your new service, and replace it in your code.
 
 ```javascript
 // example Javascript code to call your Azure OpenAI instance
@@ -39,6 +39,7 @@ const { Configuration } = require("openai");
 const apiKey = process.env.MY_API_KEY;
 
 config = new Configuration({
+  // replace endpoint with your new API Management instance endpoint
   basePath: `https://${APIM_ENDPOINT}/openai/deployments/${OPENAI_DEPLOYMENT_NAME}`,
 
   // be sure to add headers!
