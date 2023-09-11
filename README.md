@@ -11,41 +11,6 @@ This project aims to create a simple and easy to deploy solution to add observab
 
 ![Demo](/images/demo.gif)
 
-## Architecture footprint
-
-The main components of the architecture include:
-
-- API Management (Consumption plan)
-  - Proxies your Azure OpenAI endpoint.
-  - Provides a subscription key so you don't have to share your original API key.
-  - Collects logs and metrics.
-- Application Insights
-  - Captures all logs from the APIM service via Application Insights logger resource.
-  - Provides a workbook with prebuilt queries for easy access to logs.
-  - `QueryPack` resource with prebuilt `Query` added.
-  - Workbook to view table of logs (WIP - need to improve how we visualize longer logs).
-- Workbook
-  - Requests - view your requests including user & assistant responses, and system messages.
-  - Metrics - view stats about your requests, including average response time, tokens, and more.
-- Azure OpenAI (PROVIDED BY USER)
-  - When running this Bicep template, you must provide your Azure OpenAI endpoint and API key. **This script will NOT create an Azure OpenAI instance for you.**
-- Dashboard
-  - This will eventually be used for quick links and instructions.
-
-<!-- ![Provisioned resources](/images/resources.png) -->
-
-<details>
-
-<summary>
-
-**View Bicep explorer**
-
-</summary>
-
-![Bicep explorer](/images/explorer.png)
-
-</details>
-
 # Usage instructions
 
 - **Pre-requisite: You must have an Azure OpenAI service provisioned already.**
@@ -60,7 +25,7 @@ az group create --name loggerTest --location eastus
 ```bash
 az deployment group create --resource-group loggerTest \
 --template-file ./main.bicep \
---parameters openAiEndpoint="https://your-instance-hostname.openai.azure.com/openai/" \
+--parameters openAiEndpoint="https://your-instance-hostname.openai.azure.com" \
 openAiApiKey="your-api-key"
 ```
 
@@ -83,6 +48,33 @@ config = new Configuration({
   },
 });
 ```
+
+## Debugging issues
+
+- Test your new endpoint by using the API Management tester (APIM -> APIs -> OpenAI Proxy API -> Test)
+  - If you get a 404, it's likely because the original endpoint you provided was structured incorrectly. Go to Backends -> backend -> Properties - you should see your original endpoint + `/openai`
+
+## Architecture footprint
+
+The main components of the architecture include:
+
+- API Management (Consumption plan)\*
+  - Proxies your Azure OpenAI endpoint.
+  - Provides a subscription key so you don't have to share your original API key.
+  - Collects logs and metrics.
+  - \* Consider upgrading this to Basic or Standard
+- Application Insights
+  - Captures all logs from the APIM service via Application Insights logger resource.
+  - Provides a workbook with prebuilt queries for easy access to logs.
+  - `QueryPack` resource with prebuilt `Query` added.
+  - Workbook to view table of logs (WIP - need to improve how we visualize longer logs).
+- Workbook
+  - Requests - view your requests including user & assistant responses, and system messages.
+  - Metrics - view stats about your requests, including average response time, tokens, and more.
+- Azure OpenAI (PROVIDED BY USER)
+  - When running this Bicep template, you must provide your Azure OpenAI endpoint and API key. **This script will NOT create an Azure OpenAI instance for you.**
+- Dashboard
+  - This will eventually be used for quick links and instructions.
 
 # Key considerations
 

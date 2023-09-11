@@ -24,11 +24,13 @@ todos
 -
 */
 
+var endpoint = '${openAiEndpoint}/openai'
+
 resource openAiApiProxy 'Microsoft.ApiManagement/service/apis@2023-03-01-preview' = {
   parent: apiManagementService
   name: 'OpenAIProxy'
   properties: {
-    serviceUrl: openAiEndpoint
+    serviceUrl: endpoint
     path: 'openai'
     displayName: 'OpenAI Proxy API' // Added display name
     protocols: [ 'https' ]
@@ -81,7 +83,7 @@ resource apiBackend 'Microsoft.ApiManagement/service/backends@2023-03-01-preview
   parent: apiManagementService
   name: 'backend'
   properties: {
-    url: openAiEndpoint
+    url: endpoint
     protocol: 'http'
     title: 'OpenAI API'
     description: 'OpenAI API'
