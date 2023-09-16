@@ -29,7 +29,8 @@ az deployment group create --resource-group loggerTest \
 openAiApiKey="your-api-key"
 ```
 
-- Review your API Management instance to copy the endpoint of your new service, and replace it in your code.
+- Navigate to the API Management instance deployed to your resource group.
+- Copy your new endpoint from APIM and Subscription Key, and replace it in your code.
 
 ```javascript
 // example Javascript code to call your Azure OpenAI instance
