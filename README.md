@@ -1,3 +1,7 @@
+> _Need help setting this up for your organization? Let's chat._
+>
+> <a href="https://cal.com/teammait"><img src="https://cal.com/book-with-cal-dark.svg" alt="Book an intro meeting."></a>
+
 # Observability for your Azure OpenAI instance
 
 ## Overview and goals
@@ -29,7 +33,8 @@ az deployment group create --resource-group loggerTest \
 openAiApiKey="your-api-key"
 ```
 
-- Review your API Management instance to copy the endpoint of your new service, and replace it in your code.
+- Navigate to the API Management instance deployed to your resource group.
+- Copy your new endpoint from APIM and Subscription Key, and replace it in your code.
 
 ```javascript
 // example Javascript code to call your Azure OpenAI instance
