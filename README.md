@@ -1,3 +1,7 @@
+> _Need help setting this up for your organization? Let's chat._
+>
+> <a href="https://cal.com/teammait"><img src="https://cal.com/book-with-cal-dark.svg" alt="Book an intro meeting."></a>
+
 # Observability for your Azure OpenAI instance
 
 ## Overview and goals
