@@ -6,6 +6,8 @@
 
 ## Overview and goals
 
+> **❗️ This project is in "beta"! Please re-review all deployment parameters, code, and queries before using in a production scenario.**
+
 This project aims to create a simple and easy to deploy solution to add observability to your Azure OpenAI instance. The approach adds an API Management instance as a proxy for your existing Azure OpenAI service, and funnels logs / requests / responses to an Application Insights instance. Additionally, a prebuilt query is saved to a workbook for easy access to logs.
 
 - Keep all your OpenAI generations, metrics, and logs in your own Azure subscription.
