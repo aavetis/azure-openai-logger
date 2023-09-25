@@ -85,7 +85,7 @@
                         "timeContextFromParameter": "TimeRange",
                         "queryType": 0,
                         "resourceType": "microsoft.insights/components",
-                        "value": "user"
+                        "value": null
                     },
                     {
                         "id": "0de0af5c-301b-4541-bc4c-09c5f5e0cbab",
@@ -206,7 +206,7 @@
             "type": 3,
             "content": {
                 "version": "KqlItem/1.0",
-                "query": "requests\n| extend totalTokens = todouble(parse_json(tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage)).total_tokens)))\n| summarize sumTotalTokens=sum(totalTokens) by bin(timestamp, 1h)\n| render timechart\n",
+                "query": "let series_moving_avg_fl = (y_series:dynamic, n:int, center:bool=false)\n{\n    series_fir(y_series, repeat(1, n), true, center)\n};\nrequests\n| extend totalTokens = todouble(parse_json(tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage)).total_tokens)))\n| summarize sumTotalTokens=sum(totalTokens) by bin(timestamp, 1h)\n| extend dummy = 1 // Dummy column to align time series\n| make-series sumTotalTokens_series=sum(sumTotalTokens) on timestamp step 1h by dummy\n| extend sumTotalTokens_moving_avg = series_moving_avg_fl(sumTotalTokens_series, 12, true)\n| mv-expand timestamp to typeof(datetime), sumTotalTokens_series to typeof(double), sumTotalTokens_moving_avg to typeof(double)\n| project timestamp, sumTotalTokens_series, sumTotalTokens_moving_avg\n| render timechart\n",
                 "size": 0,
                 "showAnalytics": true,
                 "title": "Token usage over time",
@@ -230,7 +230,7 @@
             "type": 3,
             "content": {
                 "version": "KqlItem/1.0",
-                "query": "requests\n| extend Model = tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).model)))\n| extend UsageData = parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage))\n| extend PromptTokens = toreal(UsageData[\"prompt_tokens\"]), CompletionTokens = toreal(UsageData[\"completion_tokens\"])\n| extend PromptCost = iif(Model == \"gpt-35-turbo\", (PromptTokens/1000)*0.0015, iif(Model == \"gpt-4\", (PromptTokens/1000)*0.03, 0.0))\n| extend CompletionCost = iif(Model == \"gpt-35-turbo\", (CompletionTokens/1000)*0.002, iif(Model == \"gpt-4\", (CompletionTokens/1000)*0.06, 0.0))\n| extend TotalCost = PromptCost + CompletionCost\n| summarize totalCost=sum(TotalCost) by bin(timestamp, 1h)\n| render timechart\n",
+                "query": "requests\n| extend Model = tostring(parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).model)))\n| extend UsageData = parse_json(tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).usage))\n| extend PromptTokens = toreal(UsageData[\"prompt_tokens\"]), CompletionTokens = toreal(UsageData[\"completion_tokens\"])\n| extend PromptCost = iif(Model == \"gpt-35-turbo\", (PromptTokens/1000)*0.0015, iif(Model == \"gpt-4\", (PromptTokens/1000)*0.03, 0.0))\n| extend CompletionCost = iif(Model == \"gpt-35-turbo\", (CompletionTokens/1000)*0.002, iif(Model == \"gpt-4\", (CompletionTokens/1000)*0.06, 0.0))\n| extend TotalCost = PromptCost + CompletionCost\n| summarize totalCost=sum(TotalCost), promptCost=sum(PromptCost), completionCost=sum(CompletionCost) by bin(timestamp, 1h)\n| project timestamp, totalCost, promptCost, completionCost\n| render timechart\n",
                 "size": 0,
                 "showAnalytics": true,
                 "title": "Total cost over time",
