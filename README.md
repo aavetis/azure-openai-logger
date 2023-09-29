@@ -32,18 +32,18 @@ az group create --name loggerTest --location eastus
 az deployment group create --resource-group loggerTest \
 --template-file ./main.bicep \
 --parameters openAiEndpoint="https://your-instance-hostname.openai.azure.com" \
-openAiApiKey="your-api-key"
+openAiApiKey="your-openai-api-key"
 ```
 
 - Navigate to the API Management instance deployed to your resource group.
-- Copy your new endpoint from APIM and Subscription Key, and replace it in your code.
+- Copy your new endpoint from APIM and Subscription Key, and replace it in your code. (You can find your Subscription key in Azure API Manager by clicking "Subscriptions", then on the elipsis dots ("...") to the right of OpenAI Subscription, and finally on "Show/hide keys")
 
 ```javascript
 // example Javascript code to call your Azure OpenAI instance
 const { Configuration } = require("openai");
 
 // add your APIM Subscription Key
-const apiKey = process.env.MY_API_KEY;
+const apiKey = process.env.MY_APIM_API_KEY;
 
 config = new Configuration({
   // replace endpoint with your new API Management instance endpoint
@@ -60,6 +60,8 @@ config = new Configuration({
 ## Debugging issues
 
 - Test your new endpoint by using the API Management tester (APIM -> APIs -> OpenAI Proxy API -> Test)
+  - For `deployment-id` use a model deployment name you have deployed in Azure Open AI (eg. "gpt-35-turbo")
+  - For `api-version` use the API version you are using (eg. "2023-07-01-preview")
   - If you get a 404, it's likely because the original endpoint you provided was structured incorrectly. Go to Backends -> backend -> Properties - you should see your original endpoint + `/openai`
 
 ## Architecture footprint
