@@ -16,6 +16,7 @@ This project aims to create a simple and easy to deploy solution to add observab
 # Usage instructions
 
 - **Pre-requisite: You must have an Azure OpenAI service provisioned already.**
+- See the examples folder for quickstarts - [**OpenAI**](/examples/openai-example.py), [**Langchain**](/examples/langchain-example.py)
 - (Recommended) Create a new resource group to house these resources
 
 ```bash
