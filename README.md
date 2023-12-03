@@ -54,6 +54,37 @@ config = new Configuration({
 });
 ```
 
+## Advanced usage
+
+With your OpenAI calls, you can provide any amount of custom headers to track usage. For example, tracking how many requests a user makes, or how many calls are on a certain plan, or from a region, or by application.
+
+Provide the `custom-headers` attribute as a string inside of the headers object:
+
+```javascript
+
+config = new Configuration({
+  basePath: `https://${APIM_ENDPOINT}/openai/deployments/${OPENAI_DEPLOYMENT_NAME}`,
+
+  baseOptions: {
+    headers: { 
+      "api-key": apiKey,
+       "custom-headers": JSON.stringify({
+            user: "a_unique_id",
+            planId: "your_plan_id",
+            region: "your_region",
+            application: "my-web-app",
+            appVersion: "1.0.0"
+          }),
+    },
+    params: { "api-version": "2023-07-01-preview" },
+  },
+});
+```
+
+As requests come in, the property dimension dropdown will be populated by the *attributes* of your custom headers. The values will aggregate the requests that came in with those values.
+
+![Custom headers analytics](images/custom-headers.png)
+
 ## Debugging issues
 
 - Test your new endpoint by using the API Management tester (APIM -> APIs -> OpenAI Proxy API -> Test)
