@@ -459,12 +459,12 @@
                     "style": "markdown"
                 }
             },
+            "customWidth": "0",
             "conditionalVisibility": {
                 "parameterName": "SelectedRequest",
                 "comparison": "isNotEqualTo",
                 "value": "none"
             },
-            "customWidth": "0",
             "name": "Request Metadata",
             "styleSettings": {
                 "margin": "0",
@@ -487,18 +487,66 @@
                     "style": "markdown"
                 }
             },
+            "customWidth": "65",
             "conditionalVisibility": {
                 "parameterName": "SelectedRequest",
                 "comparison": "isNotEqualTo",
                 "value": "none"
             },
-            "customWidth": "65",
             "name": "Request History",
             "styleSettings": {
                 "margin": "0",
                 "padding": "12px",
                 "showBorder": true
             }
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "// Feedback records from the /openai/feedback endpoint\nlet FeedbackRecords = \n  requests\n  | where url endswith \"/openai/feedback\"\n  | extend fb = parse_json(tostring(customDimensions[\"Request-Body\"]))\n  | extend fbRequestId = tostring(fb.requestId)\n  | project \n      FeedbackTime = timestamp, \n      fbRequestId, \n      feedback = fb.feedback, \n      comments = fb.comments, \n      userId = tostring(fb.metadata.userId),\n      fbPayload = parse_json(tostring(customDimensions[\"Request-Body\"]));\n// Main request records that include the model generation (completions or chat)\nlet MainRequests = \n  requests\n  | where operation_Name has \"Completions_Create\" or operation_Name has \"ChatCompletions_Create\"\n  | extend mainRequestId = tostring(customDimensions.[\"Request Id\"])\n  // Extract the model-generated output from the Response-Body\n  | extend lastMessage = tostring(\n      parse_json(\n        tostring(\n          parse_json(\n            tostring(parse_json(tostring(customDimensions.[\"Response-Body\"])).choices)\n          )[0].message\n        )\n      ).content\n    )\n  | project mainRequestId, lastMessage;\n// Join feedback with its corresponding main request to show the model-generated last message\nFeedbackRecords\n| join kind=leftouter MainRequests on $left.fbRequestId == $right.mainRequestId\n| project FeedbackTime, feedback, lastMessage, comments, fbRequestId, userId, fbPayload\n| order by FeedbackTime desc\n",
+                "size": 0,
+                "title": "Feedback",
+                "timeContextFromParameter": "TimeRange",
+                "exportFieldName": "fbRequestId",
+                "exportParameterName": "SelectedFeedbackRequestId",
+                "queryType": 0,
+                "resourceType": "microsoft.insights/components",
+                "gridSettings": {
+                    "formatters": [
+                        {
+                            "columnMatch": "feedback",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "thresholdsOptions": "colors",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "==",
+                                        "thresholdValue": "positive",
+                                        "representation": "green",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "==",
+                                        "thresholdValue": "negative",
+                                        "representation": "redBright",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            "name": "Feedback"
         },
         {
             "type": 1,
@@ -511,8 +559,5 @@
             }
         }
     ],
-    "fallbackResourceIds": [
-        "/subscriptions/50fbd004-95f5-4ece-baf9-d73565614a6a/resourcegroups/roasted-proxy-prod/providers/microsoft.insights/components/openaiappinsights"
-    ],
-    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+    "isLocked": true
 }
