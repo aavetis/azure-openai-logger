@@ -18,12 +18,6 @@ resource apiManagementService 'Microsoft.ApiManagement/service@2023-03-01-previe
   }
 }
 
-/*
-todos
-- add keyvault for named value on api? might be dumb, because we need the api key at some point anyway
--
-*/
-
 var endpoint = '${openAiEndpoint}/openai'
 
 resource openAiApiProxy 'Microsoft.ApiManagement/service/apis@2023-03-01-preview' = {
@@ -32,8 +26,8 @@ resource openAiApiProxy 'Microsoft.ApiManagement/service/apis@2023-03-01-preview
   properties: {
     serviceUrl: endpoint
     path: 'openai'
-    displayName: 'OpenAI Proxy API' // Added display name
-    protocols: [ 'https' ]
+    displayName: 'OpenAI Proxy API'
+    protocols: ['https']
     format: 'openapi-link'
     value: 'https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/data-plane/AzureOpenAI/inference/stable/2023-05-15/inference.json'
     subscriptionRequired: true
@@ -61,21 +55,28 @@ resource inboundPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-03-01
     format: 'rawxml'
     value: '''
       <policies>
-      <inbound>
+        <inbound>
+          <!-- Explicitly convert RequestId to string -->
+          <set-variable name="requestId" value="@((string)context.RequestId.ToString())" />
           <base />
           <set-backend-service backend-id="backend" />
-      </inbound>
-      <backend>
+        </inbound>
+        <backend>
           <base />
-      </backend>
-      <outbound>
+        </backend>
+        <outbound>
           <base />
-      </outbound>
-      <on-error>
+          <!-- Pass requestId back in response header -->
+          <set-header name="x-request-id" exists-action="override">
+            <value>@((string)context.Variables["requestId"])</value>
+          </set-header>
+        </outbound>
+        <on-error>
           <base />
-      </on-error>
-    </policies>
-  '''
+        </on-error>
+      </policies>
+
+    '''
   }
 }
 
@@ -93,7 +94,9 @@ resource apiBackend 'Microsoft.ApiManagement/service/backends@2023-03-01-preview
     }
     credentials: {
       header: {
-        'api-key': [ openAiApiKey ]
+        'api-key': [
+          openAiApiKey
+        ]
       }
     }
   }
@@ -161,6 +164,64 @@ resource apiDiagnostics 'Microsoft.ApiManagement/service/apis/diagnostics@2023-0
       }
     }
     verbosity: 'information'
+  }
+}
+
+/*
+  NEW: /feedback operation to capture binary feedback and log it.
+*/
+
+resource openAiFeedbackOperation 'Microsoft.ApiManagement/service/apis/operations@2023-03-01-preview' = {
+  name: 'feedback'
+  parent: openAiApiProxy
+  properties: {
+    displayName: 'Feedback'
+    method: 'POST'
+    urlTemplate: '/feedback'
+  }
+}
+
+resource openAiFeedbackPolicy 'Microsoft.ApiManagement/service/apis/operations/policies@2023-03-01-preview' = {
+  name: 'policy'
+  parent: openAiFeedbackOperation
+  properties: {
+    format: 'rawxml'
+    value: '''
+      <policies>
+        <inbound>
+          <base />
+          <trace source="feedback">
+            @{
+              // Parse the incoming request body as JSON
+              var bodyJson = context.Request.Body.As<JObject>(preserveContent: true);
+              // Build a structured object using the full payload
+              var logObject = new {
+                requestId = (string)bodyJson["requestId"],
+                feedback = (string)bodyJson["feedback"],
+                comments = (string)bodyJson["comments"],
+                metadata = bodyJson["metadata"] // This is already a JSON object containing userId and timestamp, among others
+              };
+              // Serialize the object to JSON
+              return Newtonsoft.Json.JsonConvert.SerializeObject(logObject);
+            }
+          </trace>
+          <return-response>
+            <set-status code="200" reason="OK" />
+            <set-body>@("{\"message\":\"Feedback received.\"}")</set-body>
+          </return-response>
+        </inbound>
+        <backend>
+          <base />
+        </backend>
+        <outbound>
+          <base />
+        </outbound>
+        <on-error>
+          <base />
+        </on-error>
+      </policies>
+
+    '''
   }
 }
 

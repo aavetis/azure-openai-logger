@@ -10,6 +10,7 @@ This project aims to create a simple and easy to deploy solution to add observab
 - Provision and configure all dependent services programmatically.
 - Queries, workbooks, and visualizations are available out of the box.
 - An overall "batteries included" type of experience.
+- Collect user feedback on AI responses with the built-in feedback endpoint.
 
 ![Demo](/images/demo.gif)
 
@@ -54,6 +55,62 @@ config = new Configuration({
 });
 ```
 
+## Feedback Collection
+
+The deployment includes a dedicated feedback endpoint that allows you to collect user reactions (thumbs up/down) to AI responses. This helps in evaluating the quality of your AI model outputs and identifying areas for improvement.
+
+### How to use the Feedback API
+
+1. When receiving a response from the OpenAI API through the proxy, capture the request ID or another unique identifier for the interaction.
+2. To submit feedback, send a POST request to the feedback endpoint:
+
+```javascript
+// Example JavaScript code to submit feedback
+async function submitFeedback(requestId, feedback, comments = "") {
+  const response = await fetch(`https://${APIM_ENDPOINT}/feedback`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": apiKey,
+    },
+    body: JSON.stringify({
+      requestId: requestId, // ID to link feedback with the original request
+      feedback: feedback, // "positive" for thumbs up, "negative" for thumbs down
+      comments: comments, // Optional user comments
+      metadata: {
+        // Optional additional context
+        source: "web-app",
+        version: "1.0.0",
+      },
+    }),
+  });
+
+  return await response.json();
+}
+
+// Usage
+submitFeedback(
+  "conversation-123",
+  "positive",
+  "The response was very helpful and accurate"
+);
+```
+
+### Feedback Data Structure
+
+The feedback endpoint accepts a JSON payload with the following structure:
+
+| Field     | Type   | Required | Description                                                       |
+| --------- | ------ | -------- | ----------------------------------------------------------------- |
+| requestId | string | Yes      | Identifier that links the feedback to the original AI request     |
+| feedback  | string | Yes      | User reaction: "positive" (thumbs up) or "negative" (thumbs down) |
+| comments  | string | No       | Optional user comments explaining their feedback                  |
+| metadata  | object | No       | Optional additional context or metadata                           |
+
+### Viewing Feedback Data
+
+Feedback data is logged to Application Insights and can be queried alongside your request logs. The feedback is associated with the original request through the `requestId` field, allowing you to correlate user feedback with specific AI interactions.
+
 ## Advanced usage
 
 With your OpenAI calls, you can provide any amount of custom headers to track usage. For example, tracking how many requests a user makes, or how many calls are on a certain plan, or from a region, or by application.
@@ -61,27 +118,26 @@ With your OpenAI calls, you can provide any amount of custom headers to track us
 Provide the `custom-headers` attribute as a string inside of the headers object:
 
 ```javascript
-
 config = new Configuration({
   basePath: `https://${APIM_ENDPOINT}/openai/deployments/${OPENAI_DEPLOYMENT_NAME}`,
 
   baseOptions: {
-    headers: { 
+    headers: {
       "api-key": apiKey,
-       "custom-headers": JSON.stringify({
-            user: "a_unique_id",
-            planId: "your_plan_id",
-            region: "your_region",
-            application: "my-web-app",
-            appVersion: "1.0.0"
-          }),
+      "custom-headers": JSON.stringify({
+        user: "a_unique_id",
+        planId: "your_plan_id",
+        region: "your_region",
+        application: "my-web-app",
+        appVersion: "1.0.0",
+      }),
     },
     params: { "api-version": "2023-07-01-preview" },
   },
 });
 ```
 
-As requests come in, the property dimension dropdown will be populated by the *attributes* of your custom headers. The values will aggregate the requests that came in with those values.
+As requests come in, the property dimension dropdown will be populated by the _attributes_ of your custom headers. The values will aggregate the requests that came in with those values.
 
 ![Custom headers analytics](images/custom-headers.png)
 
